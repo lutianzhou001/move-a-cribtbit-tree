@@ -1,0 +1,17 @@
+2023-02-16T07:41:19.037464Z  WARN sui::client_commands: Client/Server api version mismatch, client api version : 0.25.0, server api version : 0.26.0
+2023-02-16T07:46:06.428091Z  INFO sui::client_commands: devnet
+2023-02-16T07:48:20.851060Z  WARN sui::client_commands: Client/Server api version mismatch, client api version : 0.25.0, server api version : 0.26.0
+2023-02-16T09:32:21.934088Z  WARN sui::client_commands: Client/Server api version mismatch, client api version : 0.26.1, server api version : 0.26.0
+2023-02-16T09:32:24.465962Z  INFO sui::client_commands: [1mSuccessfully created an ExampleNFT:[0m
+2023-02-16T09:32:24.465977Z  INFO sui::client_commands: 
+2023-02-16T09:32:24.465980Z  INFO sui::client_commands: [1m----- Move Object (0x1ddaf7015736c576205a03154682f113e3d2e8b7[232]) -----[0m
+2023-02-16T09:32:24.465983Z  INFO sui::client_commands: [1;90mOwner[0m: Account Address ( 0xe6806ff772d6385d62299e03e3e40af94776e1ac )
+2023-02-16T09:32:24.465985Z  INFO sui::client_commands: [1;90mVersion[0m: 232
+2023-02-16T09:32:24.465987Z  INFO sui::client_commands: [1;90mStorage Rebate[0m: 25
+2023-02-16T09:32:24.465990Z  INFO sui::client_commands: [1;90mPrevious Transaction[0m: TransactionDigest(14oP2M4AW7fYNzFxmZ18vmdyFzEvsTXrr7mWFHzoqCxG)
+2023-02-16T09:32:24.465992Z  INFO sui::client_commands: [1m----- Data -----[0m
+2023-02-16T09:32:24.465995Z  INFO sui::client_commands: [1;90mtype[0m: 0x2::devnet_nft::DevNetNFT
+2023-02-16T09:32:24.465997Z  INFO sui::client_commands: [1;90mdescription[0m: An NFT created by the Sui Command Line Tool
+2023-02-16T09:32:24.466000Z  INFO sui::client_commands: [1;90mid[0m: 0x1ddaf7015736c576205a03154682f113e3d2e8b7
+2023-02-16T09:32:24.466003Z  INFO sui::client_commands: [1;90mname[0m: Example NFT
+2023-02-16T09:32:24.466005Z  INFO sui::client_commands: [1;90murl[0m: ipfs://bafkreibngqhl3gaa7daob4i2vccziay2jjlp435cf66vhono7nrvww53ty
