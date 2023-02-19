@@ -3,7 +3,7 @@ module my_first_package::critbit {
     use sui::object::{Self, UID};
     use sui::transfer;
     use sui::tx_context::{Self, TxContext};
-    use std::option::{Self, Option, is_some};
+    use std::option::{Self, Option, is_some, extract};
     use std::vector::{
         length,
         is_empty,
@@ -30,13 +30,13 @@ module my_first_package::critbit {
     // max of depth is 63 in a u64 number.
     const MAX_DEPTH: u8 = 63;
 
-    struct Leaf<V> has key, store {
+    struct Leaf<V> has key, copy, store {
         key: u64,
         value: V,
         parentNodeIdx: u64,
     }
 
-    struct Node has key, store {
+    struct Node has key, copy, store {
         depth: u8,
         key: u64,
         parentNodeIdx: u64,
@@ -54,15 +54,21 @@ module my_first_package::critbit {
         let depth = 0;
         loop {
             if (depth == MAX_DEPTH) {
-                // it must be that min leaf, just return the leaf
-                let leaf = v_b<Leaf<V>>(&cTree.leaves, node.rightChildIdx);
-                return (leaf.key, leaf.value);
+                if (is_some(&node.leftChildIdx)) {
+                    // it must be a leaf, return the leaf
+                    let leaf = v_b<Leaf<V>>(&cTree.leaves, extract(node.leftChildIdx));
+                    return (leaf.key, leaf.value);
+                } else {
+                    // it must be that min leaf, just return the leaf
+                    let leaf = v_b<Leaf<V>>(&cTree.leaves, extract(node.rightChildIdx));
+                    return (leaf.key, leaf.value);
+                }
             } else {
-                if (is_some(node.leftChildIdx)) {
-                    node = v_b<Node>(&cTree.nodes, node.leftChildIdx);
+                if (is_some(&node.leftChildIdx)) {
+                    node = v_b<Node>(&cTree.nodes, extract(node.leftChildIdx));
                 } else {
                     // it must be a leaf, return the leaf
-                    let node = v_b<Node>(&cTree.leaves, node.rightChildIdx);
+                    let node = v_b<Node>(&cTree.leaves, extract(node.rightChildIdx));
                 }
             };
             depth = depth + 1;
@@ -88,8 +94,8 @@ module my_first_package::critbit {
                     });
                     node.rightChildIdx = key;
                 } else {
-                    if (is_some(node.rightChildIdx)) {
-                        node = v_b<Node>(&cTree.nodes, node.rightChildIdx);
+                    if (is_some(&node.rightChildIdx)) {
+                        node = v_b<Node>(&cTree.nodes, extract(node.rightChildIdx));
                     } else {
                         let idx = key >> (MAX_DEPTH - depth) << 1 + 1;
                         // create a new node here.
@@ -115,7 +121,7 @@ module my_first_package::critbit {
                     node.rightChildIdx = key;
                 } else {
                     if (is_some(node.leftChildIdx)) {
-                        node = v_b<Node>(&cTree.nodes, node.leftChildIdx);
+                        node = v_b<Node>(&cTree.nodes, extract(node.leftChildIdx));
                     } else {
                         let idx = key >> depth << 1 + 0;
                         // create a new node here
