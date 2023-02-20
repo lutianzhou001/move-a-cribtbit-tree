@@ -87,7 +87,7 @@ module my_first_package::critbit {
                 } else {
                     // bit at that == 1, it have to deep to the right child.
                     if (is_some(&node.rightChildIdx)) {
-                        let node = get_mut<Option<u64>,Node<V>>(&mut cTree.nodes, &node.rightChildIdx);
+                        node = get_mut<Option<u64>,Node<V>>(&mut cTree.nodes, &node.rightChildIdx);
                     } else {
                         // create a new node here.
                         insert<Option<u64>,Node<V>>(&mut cTree.nodes, option::some(currentKey), Node<V>{
@@ -120,7 +120,7 @@ module my_first_package::critbit {
                 } else {
                     // bit == 0, consider the left child.
                     if (is_some(&node.leftChildIdx)) {
-                        let node = get_mut<Option<u64>, Node<V>>(&mut cTree.nodes, &node.leftChildIdx);
+                        node = get_mut<Option<u64>, Node<V>>(&mut cTree.nodes, &node.leftChildIdx);
                     } else {
                         insert<Option<u64>,Node<V>>(&mut cTree.nodes, option::some(currentKey), Node<V>{
                             depth,
@@ -156,7 +156,7 @@ module my_first_package::critbit {
                 } else {
                     // route to the node
                     if (is_some(&node.rightChildIdx)) {
-                        let node = get_mut<Option<u64>, Node<V>>(&mut cTree.nodes, &node.rightChildIdx);
+                        node = get_mut<Option<u64>, Node<V>>(&mut cTree.nodes, &node.rightChildIdx);
                     } else {
                         break;
                     }
@@ -169,7 +169,7 @@ module my_first_package::critbit {
                 } else {
                     // route the node
                     if (is_some(&node.leftChildIdx)) {
-                        let node =get_mut<Option<u64>, Node<V>>(&mut cTree.nodes, &node.leftChildIdx);
+                        node =get_mut<Option<u64>, Node<V>>(&mut cTree.nodes, &node.leftChildIdx);
                     } else {
                         break;
                     }
