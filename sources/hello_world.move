@@ -37,9 +37,9 @@ module my_first_package::critbit {
             } else {
                 // otherwise, we find a node;
                 if (is_some(&node.leftChildIdx)) {
-                    let node = v_b<Node<V>>(&cTree.nodes, *option::borrow(&node.leftChildIdx));
+                    let node = get<Option<u64>, Node<V>>(&cTree.nodes, &node.leftChildIdx);
                 } else if (is_some(&node.rightChildIdx)) {
-                    let node = v_b<Node<V>>(&cTree.nodes, *option::borrow(&node.rightChildIdx));
+                    let node = get<Option<u64>, Node<V>>(&cTree.nodes, &node.rightChildIdx);
                 } else {
                 // the node does not have a left child nor have a right child, return null.
                 return (option::none(), option::none());
