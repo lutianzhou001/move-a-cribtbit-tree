@@ -1,6 +1,6 @@
 module my_first_package::critbit {
     use sui::object::{Self, UID};
-    use sui::vec_map::{Self, VecMap, insert, remove, get};
+    use sui::vec_map::{Self, VecMap, insert, remove, get, get_mut};
     use sui::tx_context::{Self, TxContext};
     use std::option::{Self, Option, is_some, extract};
     use std::vector::{
@@ -66,7 +66,7 @@ module my_first_package::critbit {
         value: V
     ): &mut Node<V> {
         // if it is not the leaf, it must be a node, borrow_mut the node
-        let node = v_b_m<Node<V>>(&mut cTree.nodes, cTree.root);
+        let node = get_mut<Option<u64>, Node<V>>(&mut cTree.nodes, &option::some(cTree.root));
         let depth:u8 = 0;
         loop {
             if (key >> (MAX_DEPTH - depth) & 1 == 1) {
@@ -87,7 +87,7 @@ module my_first_package::critbit {
                 } else {
                     // bit at that == 1, it have to deep to the right child.
                     if (is_some(&node.rightChildIdx)) {
-                        let node = v_b_m<Node<V>>(&mut cTree.nodes, *option::borrow(&node.rightChildIdx));
+                        let node = get_mut<Option<u64>,Node<V>>(&mut cTree.nodes, &node.rightChildIdx);
                     } else {
                         // create a new node here.
                         insert<Option<u64>,Node<V>>(&mut cTree.nodes, option::some(currentKey), Node<V>{
@@ -120,7 +120,7 @@ module my_first_package::critbit {
                 } else {
                     // bit == 0, consider the left child.
                     if (is_some(&node.leftChildIdx)) {
-                        let node = v_b_m<Node<V>>(&mut cTree.nodes, *option::borrow(&node.leftChildIdx));
+                        let node = get_mut<Option<u64>, Node<V>>(&mut cTree.nodes, &node.leftChildIdx);
                     } else {
                         insert<Option<u64>,Node<V>>(&mut cTree.nodes, option::some(currentKey), Node<V>{
                             depth,
@@ -156,7 +156,7 @@ module my_first_package::critbit {
                 } else {
                     // route to the node
                     if (is_some(&node.rightChildIdx)) {
-                        let node = v_b_m<Option<u64>, Node<V>>(&mut cTree.nodes, *option::borrow(&node.rightChildIdx));
+                        let node = get_mut<Option<u64>, Node<V>>(&mut cTree.nodes, &node.rightChildIdx);
                     } else {
                         break;
                     }
@@ -169,7 +169,7 @@ module my_first_package::critbit {
                 } else {
                     // route the node
                     if (is_some(&node.leftChildIdx)) {
-                        let node = v_b_m<Option<u64>, Node<V>>(&mut cTree.nodes, *option::borrow(&node.leftChildIdx));
+                        let node =get_mut<Option<u64>, Node<V>>(&mut cTree.nodes, &node.leftChildIdx);
                     } else {
                         break;
                     }
