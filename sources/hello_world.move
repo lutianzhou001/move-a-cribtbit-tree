@@ -16,7 +16,7 @@ module my_first_package::critbit {
     // max of depth is 63 in a u64 number.
     const MAX_DEPTH: u8 = 63;
 
-    struct Node<V> has key, drop, copy, store {
+    struct Node<V> has key, copy, store {
         depth: u8,
         // only leaf have the key and the value, while only node have the children.
         key: Option<u64>,
@@ -78,7 +78,7 @@ module my_first_package::critbit {
                     insert<Option<u64>, Node<V>>(&mut cTree.nodes, option::some(key), Node<V>{
                         depth: MAX_DEPTH,
                         key: option::some(key),
-                        value: option::some<V>,
+                        value: option::some(value),
                         parentKey: option::some(parentKey),
                         leftChildIdx: option::none(),
                         rightChildIdx: option::none(),
@@ -111,7 +111,7 @@ module my_first_package::critbit {
                     insert<Option<u64>, Node<V>>(&mut cTree.nodes, option::some(key), Node<V>{
                         depth: MAX_DEPTH,
                         key: option::some(key),
-                        value: option::some<V>,
+                        value: option::some(value),
                         parentKey: option::some(parentKey),
                         leftChildIdx: option::none(),
                         rightChildIdx: option::none(),
@@ -143,8 +143,8 @@ module my_first_package::critbit {
         (key >> bit) & 1 == 1
     }
 
-    public fun remove_leaf<V>(cTree: &mut CTree<V>, key: u64) {
-        let node = v_b_m<Node<V>>(&mut cTree.nodes, cTree.root);
+    public fun remove_leaf<V: copy>(cTree: &mut CTree<V>, key: u64) {
+        let node = get_mut<Option<u64>, Node<V>>(&mut cTree.nodes, &option::some(cTree.root));
         let depth = 0;
         loop {
             if ((key >> (MAX_DEPTH - depth) & 1 == 1)) {
