@@ -1,6 +1,6 @@
 module my_first_package::critbit {
     use sui::object::{Self, UID};
-    use sui::vec_map::{Self, VecMap, insert, remove};
+    use sui::vec_map::{Self, VecMap, insert, remove, get};
     use sui::tx_context::{Self, TxContext};
     use std::option::{Self, Option, is_some, extract};
     use std::vector::{
@@ -26,9 +26,9 @@ module my_first_package::critbit {
         rightChildIdx: Option<u64>,
     }
 
-    public fun min_leaf<V: key + copy>(cTree: &CTree<V>) : (u64, Option<V>) {
+    public fun min_leaf<V: key + copy>(cTree: &CTree<V>) : (Option<u64>, Option<V>) {
         // we try to find the min leaf in the tree with the binary tree search algorithm.
-        let node = v_b<Node<V>>(&cTree.nodes, cTree.root);
+        let node = get<Option<u64>, Node<V>>(&cTree.nodes, &option::some(cTree.root));
         let depth = 0;
         loop {
             if (is_some(&node.value)) {
@@ -42,7 +42,7 @@ module my_first_package::critbit {
                     let node = v_b<Node<V>>(&cTree.nodes, *option::borrow(&node.rightChildIdx));
                 } else {
                 // the node does not have a left child nor have a right child, return null.
-                return (0, option::none());
+                return (option::none(), option::none());
                 }
             }
         }
