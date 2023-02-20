@@ -2,6 +2,7 @@ module my_first_package::critbit {
     use std::string;
     use sui::object::{Self, UID};
     use sui::transfer;
+    use sui::vec_set::{Self, VecSet};
     use sui::tx_context::{Self, TxContext};
     use std::option::{Self, Option, is_some, extract};
     use std::vector::{
@@ -11,35 +12,20 @@ module my_first_package::critbit {
         borrow as v_b,
         push_back as v_p_b,
     };
-    use sui::validator::Validator;
-    use sui::immutable_external_resource;
-
-
-    //types
-    struct HelloworldObject has key, store {
-        id: UID,
-        name: string::String,
-    }
 
     struct CTree<V> {
         root: u64,
-        leaves: vector<Leaf<V>>,
-        nodes: vector<Node>,
+        nodes: vec_set<Node<V>>,
     }
     
     // max of depth is 63 in a u64 number.
     const MAX_DEPTH: u8 = 63;
 
-    struct Leaf<V> has key, copy, store {
-        key: u64,
-        value: V,
-        parentNodeIdx: u64,
-    }
-
-    struct Node has key, copy, store {
+    struct Node<V> has key, copy, store {
         depth: u8,
         key: u64,
-        parentNodeIdx: u64,
+        value: Option<V>,
+        parentNode: Option<u64>,
         leftChildIdx: Option<u64>,
         rightChildIdx: Option<u64>,
     }
@@ -48,92 +34,111 @@ module my_first_package::critbit {
         length<Leaf<V>>(&cTree.leaves)
     }
     
-    public fun min_leaf<V>(cTree: &CTree<V>) : (u64, V) {
+    public fun min_leaf<V: key + copy>(cTree: &CTree<V>) : (u64, Option<V>) {
         // we try to find the min leaf in the tree with the binary tree search algorithm.
-        let node = v_b<Node>(&cTree.nodes, cTree.root);
+        let node = v_b<Node<V>>(&cTree.nodes, cTree.root);
         let depth = 0;
         loop {
-            if (depth == MAX_DEPTH) {
-                if (is_some(&node.leftChildIdx)) {
-                    // it must be a leaf, return the leaf
-                    let leaf = v_b<Leaf<V>>(&cTree.leaves, extract(node.leftChildIdx));
-                    return (leaf.key, leaf.value);
-                } else {
-                    // it must be that min leaf, just return the leaf
-                    let leaf = v_b<Leaf<V>>(&cTree.leaves, extract(node.rightChildIdx));
-                    return (leaf.key, leaf.value);
-                }
+            if (is_some(&node.value)) {
+                // in this case, we find the leaf;
+                return (node.key, option::some(*option::borrow(&node.value)));
             } else {
+                // otherwise, we find a node;
                 if (is_some(&node.leftChildIdx)) {
-                    node = v_b<Node>(&cTree.nodes, extract(node.leftChildIdx));
+                    let node = v_b<Node<V>>(&cTree.nodes, *option::borrow(&node.leftChildIdx));
+                } else if (is_some(&node.rightChildIdx)) {
+                    let node = v_b<Node<V>>(&cTree.nodes, *option::borrow(&node.rightChildIdx));
                 } else {
-                    // it must be a leaf, return the leaf
-                    let node = v_b<Node>(&cTree.leaves, extract(node.rightChildIdx));
+                // the node does not have a left child nor have a right child, return null.
+                return (0, option::none());
                 }
-            };
-            depth = depth + 1;
+            }
         }
     }
 
-    fun insert_leaf<V>(
+    /// key to the vec_set key
+    /// in the 'depth'th of the tree, numbers range from 2^depth -1 to 2^(depth+1) - 2
+    /// offset is the key, so the vec_set key is 2^depth -1 + key.
+    public fun cal_vec_key(key: u64, depth: u8) : u64 {
+        let x = 1;
+        while (depth > 0) {
+            x = x * 2;
+            depth = depth - 1;
+        };
+        return x - 1 + key
+    }
+
+    public fun insert_leaf<V>(
         cTree: &mut CTree<V>,
-        key: u128,
+        key: u64,
         value: V
-    ): &mut Node {
+    ): &mut Node<V> {
         // if it is not the leaf, it must be a node, borrow_mut the node
-        let node = v_b<Node>(&cTree.nodes, cTree.root);
-        let depth = 0;
+        let node = v_b_m<Node<V>>(&mut cTree.nodes, cTree.root);
+        let depth:u8 = 0;
         loop {
-            if ((key >> (MAX_DEPTH - depth) && 1 == 1)) {
+            if (key >> (MAX_DEPTH - depth) & 1 == 1) {
+                // dispose of right child or right leaf.
                 if (depth == MAX_DEPTH) {
                     // it must be a leaf, append a leaf on the bottom of the tree.
-                    v_p_b<Leaf<V>>(&mut cTree.leaves, Leaf{
-                        key,
-                        value,
-                        parentNodeIdx: cTree.root,
+                    insert<Node<V>>(&mut cTree.nodes, Node<V>{
+                        depth: MAX_DEPTH,
+                        key: u64,
+                        value: option::some<V>,
+                        parentNode: option::some<node>,
+                        leftChildIdx: option::none(),
+                        rightChildIdx: option::none(),
                     });
-                    node.rightChildIdx = key;
+                    node.rightChildIdx = option::some(key);
                 } else {
+                    // bit at that == 1, it have to deep to the right child.
                     if (is_some(&node.rightChildIdx)) {
-                        node = v_b<Node>(&cTree.nodes, extract(node.rightChildIdx));
+                        let node = v_b_m<Node<V>>(&mut cTree.nodes, *option::borrow(&node.rightChildIdx));
                     } else {
+                        // x' = x * 2 + 1
                         let idx = key >> (MAX_DEPTH - depth) << 1 + 1;
                         // create a new node here.
-                        v_p_b<Node>(&mut cTree.nodes, Node {
+                        insert<Node<V>>(&mut cTree.nodes, Node<V>{
                             depth,
                             key: idx,
                             parentNodeIdx: node.key,
-                            leftChildIdx: option::none<u64>,
-                            rightChildIdx: option::none<u64>,
+                            leftChildIdx: option::none(),
+                            rightChildIdx: option::none(),
                         });
                         // append the right child to the node
-                        node.rightChildIdx = idx;
+                        node.rightChildIdx = option::some(idx);
                     }
                 }
             } else {
+                // dispose of left child or left leaf.
                 if (depth == MAX_DEPTH) {
                     // it must be a leaf, we just set the child to none.
-                    v_p_b<Leaf<V>>(&mut cTree.leaves, Leaf{
-                        key,
-                        value,
-                        parentNodeIdx: cTree.root,
+                    insert<Node<V>>(&mut cTree.nodes, Node<V>{
+                        depth: MAX_DEPTH,
+                        key: u64,
+                        value: option::some<V>,
+                        parentNode: option::some<node>,
+                        leftChildIdx: option::none(),
+                        rightChildIdx: option::none(),
                     });
-                    node.rightChildIdx = key;
+                    node.leftChildIdx = option::some(key);
                 } else {
-                    if (is_some(node.leftChildIdx)) {
-                        node = v_b<Node>(&cTree.nodes, extract(node.leftChildIdx));
+                    // bit == 0, consider the left child.
+                    if (is_some(&node.leftChildIdx)) {
+                        let node = v_b_m<Node<V>>(&mut cTree.nodes, *option::borrow(&node.leftChildIdx));
                     } else {
-                        let idx = key >> depth << 1 + 0;
+                        // x' = x * 2
+                        let idx = key >> (MAX_DEPTH - depth) << 1 + 0;
                         // create a new node here
-                        v_p_b<Node>(&mut cTree.nodes, Node {
+                        insert<Node<V>>(&mut cTree.nodes, Node {
                             depth,
                             key: idx,
                             parentNodeIdx: node.key,
-                            leftChildIdx: option::none<u64>,
-                            rightChildIdx: option::none<u64>,
+                            leftChildIdx: option::none(),
+                            rightChildIdx: option::none(),
                         });
                         // append the left child to the node
-                        node.leftChildIdx = idx;
+                        node.leftChildIdx = option::some(idx);
                     }
                 }
             };
@@ -145,18 +150,19 @@ module my_first_package::critbit {
         (key >> bit) & 1 == 1
     }
 
-    public fun remove_leaf<V>(cTree: &mut CTree<V>, key: u64): V {
-        let node = v_b<Node>(&cTree.nodes, cTree.root);
+    public fun remove_leaf<V>(cTree: &mut CTree<V>, key: u64) {
+        let node = v_b_m<Node>(&mut cTree.nodes, cTree.root);
         let depth = 0;
         loop {
-            if ((key >> (MAX_DEPTH - depth) && 1 == 1)) {
+            if ((key >> (MAX_DEPTH - depth) & 1 == 1)) {
+                // we dispose of the right child or right leaf.
                 if (depth == MAX_DEPTH) {
                     // we will remove the leaf here: the right child
-                    node.rightChildIdx = option::none<u64>;
+                    node.rightChildIdx = option::none();
                 } else {
                     // route the node
-                    if (is_some(node.rightChildIdx)) {
-                        node = v_b<Node>(&cTree.nodes, node.rightChildIdx);
+                    if (is_some(&node.rightChildIdx)) {
+                        let node = v_b_m<Node>(&mut cTree.nodes, *option::borrow(&node.rightChildIdx));
                     } else {
                         break;
                     }
@@ -164,11 +170,11 @@ module my_first_package::critbit {
             } else {
                 if (depth == MAX_DEPTH) {
                     // we will remove the leaf here: the left child
-                    node.leftChildIdx = option::none<u64>;
+                    node.leftChildIdx = option::none();
                 } else {
                     // route the node
-                    if (is_some(node.leftChildIdx)) {
-                        node = v_b<Node>(&cTree.nodes, node.leftChildIdx);
+                    if (is_some(&node.leftChildIdx)) {
+                        let node = v_b_m<Node>(&mut cTree.nodes, *option::borrow(&node.leftChildIdx));
                     } else {
                         break;
                     }
