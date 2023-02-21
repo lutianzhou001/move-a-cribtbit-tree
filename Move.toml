@@ -1,6 +1,6 @@
 [package]
 name = "moveX"
-version = "0.0.1"
+version = "0.1.0"
 
 [dependencies]
 Sui = { local = "/Users/lu/Desktop/sui/crates/sui-framework" }
