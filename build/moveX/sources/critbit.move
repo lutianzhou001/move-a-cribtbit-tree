@@ -1,4 +1,4 @@
-module my_first_package::critbit {
+module moveX::critbit {
     use sui::object::{Self, ID, UID};
     use sui::vec_map::{Self, VecMap, insert, remove, get, get_mut};
     use sui::tx_context::TxContext;
