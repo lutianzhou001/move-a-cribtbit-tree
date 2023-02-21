@@ -69,6 +69,13 @@ module moveX::critbit {
     /// key to the vec_set key
     /// in the 'depth'th of the tree, numbers range from 2^depth -1 to 2^(depth+1) - 2
     /// offset is the key, so the vec_set key is 2^depth -1 + key.
+    ///            0          2^0 - 1 - 2^1 - 2
+    ///         /   \
+    ///       1     2         2^1 - 1 - 2^2 - 2       
+    ///     / \   / \
+    ///   3  4  5  6          2^2 - 1 - 2^3 - 2
+    /// / \ / \ / \ / \
+    /// 7 8 9 10 11 12 13 14  2^3 - 1 - 2^4 - 2
     public fun cal_vec_map_key(key: u64, depth: u8) : u64 {
         let x = 1;
         while (depth > 0) {
