@@ -1,9 +1,9 @@
 [package]
-name = "my_first_package"
+name = "moveX"
 version = "0.0.1"
 
 [dependencies]
-Sui = { local = "/Users/vincentlu/Desktop/sui-learning/sui/crates/sui-framework" }
+Sui = { local = "/Users/lu/Desktop/sui/crates/sui-framework" }
 
 [addresses]
 my_first_package =  "0x0"
